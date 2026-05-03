@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sands Asia Aviation Portal</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM (UMD Build) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel for in-browser JSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800">
+  
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef } = React;
+
+    // --- ICON COMPONENTS (Renamed with 'Icon' suffix to prevent global object conflicts, like Map) ---
+    const PlaneTakeoffIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 22h20"/><path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 2.1-.12l3.24-2.28a1.92 1.92 0 0 1 2.37.16l2.12 2.12c.5.5 1.25.64 1.9.36l3.4-1.46c.82-.36 1.8-.02 2.2.82l.33.68c.3.62.1 1.38-.45 1.76l-11.43 7.82a2 2 0 0 1-2.18-.04l-2.4-1.83Z"/></svg>;
+    const MapIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>;
+    const FileCheckIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>;
+    const HotelIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10 22v-6.57"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M14 15.43V22"/><path d="M15 16a5 5 0 0 0-6 0"/><path d="M16 11h.01"/><path d="M16 7h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg>;
+    const InfoIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;
+    const UsersIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+    const CopyIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
+    const AlertTriangleIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+    const ClockIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+    const MenuIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>;
+    const XIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+    const GlobeIcon = ({ className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>;
+
+    // --- MAIN APPLICATION COMPONENT ---
+    function App() {
+      const [activeTab, setActiveTab] = useState('trip-setup');
+      const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+      const tabs = [
+        { id: 'trip-setup', name: 'Trip Setup & Gen', icon: <PlaneTakeoffIcon className="w-5 h-5" /> },
+        { id: 'handlers', name: 'Ground Handlers', icon: <MapIcon className="w-5 h-5" /> },
+        { id: 'docs', name: 'Documentation', icon: <FileCheckIcon className="w-5 h-5" /> },
+        { id: 'accommodation', name: 'Accommodation', icon: <HotelIcon className="w-5 h-5" /> },
+        { id: 'general', name: 'General Info & Visa', icon: <InfoIcon className="w-5 h-5" /> },
+        { id: 'contacts', name: 'Crew Contacts', icon: <UsersIcon className="w-5 h-5" /> },
+      ];
+
+      return (
+        <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
+          {/* Mobile Sidebar Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
+
+          {/* Sidebar */}
+          <div className={`fixed inset-y-0 left-0 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 z-30 w-64 bg-blue-900 text-white transition-transform duration-300 ease-in-out flex flex-col shadow-xl`}>
+            <div className="p-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold tracking-wider text-amber-400">SANDS</h1>
+                <p className="text-sm font-light tracking-widest text-blue-200">AVIATION ASIA</p>
+              </div>
+              <button className="md:hidden text-white" onClick={() => setIsMobileMenuOpen(false)}>
+                <XIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                    activeTab === tab.id 
+                      ? 'bg-blue-800 text-amber-400 font-medium' 
+                      : 'hover:bg-blue-800/50 text-blue-100 hover:text-white'
+                  }`}
+                >
+                  {tab.icon}
+                  <span>{tab.name}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="p-4 text-xs text-blue-300/60 border-t border-blue-800">
+              Handbook Version 2.4<br/>Confidential & Proprietary
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Top Header */}
+            <header className="bg-white shadow-sm border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-center">
+                <button className="md:hidden mr-4 text-slate-600" onClick={() => setIsMobileMenuOpen(true)}>
+                  <MenuIcon className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-semibold text-slate-800">
+                  {tabs.find(t => t.id === activeTab)?.name}
+                </h2>
+              </div>
+            </header>
+
+            {/* Scrollable Content Area */}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 md:p-8">
+              <div className="max-w-6xl mx-auto">
+                {activeTab === 'trip-setup' && <TripSetup />}
+                {activeTab === 'handlers' && <GroundHandlers />}
+                {activeTab === 'docs' && <Documentation />}
+                {activeTab === 'accommodation' && <Accommodation />}
+                {activeTab === 'general' && <GeneralInfo />}
+                {activeTab === 'contacts' && <Contacts />}
+              </div>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    // --- TAB COMPONENTS ---
+
+    function TripSetup() {
+      return (
+        <div className="space-y-8">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4 border-b pb-2">1. Trip Setup & Communication</h3>
+            <ul className="space-y-3 text-slate-600 mb-6 list-disc pl-5">
+              <li><strong>Initial Notification:</strong> Asia Dispatch sends an email to the operating crew with trip details and updates the BART system.</li>
+              <li><strong>Trip Support Coordination:</strong> Asia Dispatch notifies World Fuel Services (WFS).</li>
+              <li><strong>PIC Responsibilities:</strong> The Pilot-in-Command (PIC) provides flight specifications (ETD, ETA, Fuel, Payload, etc.) and service requirements (airstairs, transport, etc.) to WFS.</li>
+            </ul>
+
+            <h4 className="font-medium text-slate-800 mt-6 mb-2">Fuel Release Requests</h4>
+            <div className="bg-blue-50 p-4 rounded-lg text-sm text-slate-700 mb-6">
+              <p className="mb-2">Refer to the fuel summary price list sent by dispatchers twice monthly. For cities not on the list, request a quotation from the 3 fuel providers and choose the lowest quotation:</p>
+              <ul className="list-disc pl-5 font-medium space-y-1 mb-2">
+                <li>AEG – <a href="mailto:dispatch@aegfuels.com" className="text-blue-600">dispatch@aegfuels.com</a></li>
+                <li>AML – <a href="mailto:fuelteam@amlglobal.net" className="text-blue-600">fuelteam@amlglobal.net</a></li>
+                <li>WFS – <a href="mailto:fuel24@wfscorp.com" className="text-blue-600">fuel24@wfscorp.com</a></li>
+              </ul>
+              <p className="italic text-amber-700">**If the fuel quotation for WFS is the lowest, PIC can set up the fuel release directly with WFS when setting up the trip email.**</p>
+            </div>
+          </div>
+
+          <TripGenerator />
+        </div>
+      );
+    }
+
+    function TripGenerator() {
+      const [formData, setFormData] = useState({
+        date: '',
+        from: '',
+        to: '',
+        etd: '',
+        eta: '',
+        fuel: '',
+        speed: '',
+        fltLvl: '',
+        payload: '',
+        waterLav: '',
+        fuelRelease: '',
+        transport: '',
+        groundStairs: '',
+        beltLoader: ''
+      });
+
+      const [copied, setCopied] = useState(false);
+
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
+
+      const loadExample = () => {
+        const today = new Date().toISOString().split('T')[0];
+        setFormData({
+          date: today,
+          from: 'RCSS',
+          to: 'WSSL',
+          etd: '1400',
+          eta: '1830',
+          fuel: '20000 kg',
+          speed: 'opt',
+          fltLvl: 'opt',
+          payload: '1500kg',
+          waterLav: 'WSSL',
+          fuelRelease: 'WMSA, RCSS - WFs',
+          transport: 'HOTEL TO WMSA',
+          groundStairs: 'All sectors',
+          beltLoader: 'On pax departure & arrival sector'
+        });
+      };
+
+      const clearForm = () => {
+        setFormData({
+          date: '', from: '', to: '', etd: '', eta: '', fuel: '', speed: '', fltLvl: '', payload: '', waterLav: '', fuelRelease: '', transport: '', groundStairs: '', beltLoader: ''
+        });
+      };
+
+      const generatedText = `Date : ${formData.date}
+From - To : ${formData.from} - ${formData.to}
+ETD : ${formData.etd} LT
+ETA : ${formData.eta} LT
+Fuel : ${formData.fuel}
+Speed : ${formData.speed}
+Flt Lvl : ${formData.fltLvl}
+Payload : ${formData.payload}
+Water/Lav : ${formData.waterLav}
+Fuel Release : ${formData.fuelRelease}
+Transport : ${formData.transport}
+Ground Stairs : ${formData.groundStairs}
+Belt Loader : ${formData.beltLoader}`;
+
+      const copyToClipboard = () => {
+        const textArea = document.createElement("textarea");
+        textArea.value = generatedText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+        }
+        document.body.removeChild(textArea);
+      };
+
+      return (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-slate-800 p-4 flex justify-between items-center text-white">
+            <h3 className="font-semibold flex items-center"><PlaneTakeoffIcon className="w-5 h-5 mr-2 text-amber-400" /> Trip Details Generator</h3>
+            <div className="space-x-2">
+              <button onClick={clearForm} className="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded transition">Clear</button>
+              <button onClick={loadExample} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded transition">Load Example</button>
+            </div>
+          </div>
+          
+          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+                  <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                 <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">From</label>
+                    <input type="text" name="from" placeholder="e.g. RCSS" value={formData.from} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">To</label>
+                    <input type="text" name="to" placeholder="e.g. WSSL" value={formData.to} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">ETD (Local Time)</label>
+                  <input type="text" name="etd" placeholder="e.g. 1400" value={formData.etd} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">ETA (Local Time)</label>
+                  <input type="text" name="eta" placeholder="e.g. 1830" value={formData.eta} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fuel</label>
+                  <input type="text" name="fuel" placeholder="e.g. 20000 kg" value={formData.fuel} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Payload</label>
+                  <input type="text" name="payload" placeholder="e.g. 1500kg" value={formData.payload} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Speed</label>
+                  <input type="text" name="speed" placeholder="e.g. opt" value={formData.speed} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Flight Level</label>
+                  <input type="text" name="fltLvl" placeholder="e.g. opt" value={formData.fltLvl} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+              </div>
+              
+              <div className="border-t border-slate-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fuel Release Provider</label>
+                  <input type="text" name="fuelRelease" placeholder="e.g. WMSA, RCSS - WFs" value={formData.fuelRelease} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Transport Requirements</label>
+                  <input type="text" name="transport" placeholder="e.g. HOTEL TO WMSA" value={formData.transport} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Water/Lav</label>
+                  <input type="text" name="waterLav" placeholder="e.g. WSSL" value={formData.waterLav} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ground Stairs</label>
+                  <input type="text" name="groundStairs" placeholder="e.g. All sectors" value={formData.groundStairs} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Belt Loader</label>
+                  <input type="text" name="beltLoader" placeholder="e.g. On pax departure & arrival sector" value={formData.beltLoader} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-slate-200 p-3 border-b border-slate-300 flex justify-between items-center">
+                <span className="text-sm font-semibold text-slate-700">Email Template Preview</span>
+                <button 
+                  onClick={copyToClipboard}
+                  className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-medium rounded transition ${copied ? 'bg-green-600 text-white' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'}`}
+                >
+                  <CopyIcon className="w-3 h-3" />
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+              <div className="p-4 flex-1">
+                <pre className="text-sm font-mono text-slate-800 whitespace-pre-wrap">{generatedText}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function GroundHandlers() {
+      const handlers = [
+        { country: 'Singapore', handler: 'Universal Singapore (VP-BTU & VP-BMH)', contact: '+65 6484 4878', email: 'singapore@universalaviation.aero' },
+        { country: 'Singapore', handler: 'Bombardier (VP-BTV & VQ-BQV)', contact: '+65 8909 3980', email: 'fbo.singapore@aero.bombardier.com' },
+        { country: 'Macau', handler: 'TAG Aviation (Macau)', contact: '+853 8295 7000', email: 'handling.macau@tagaviation.asia' },
+        { country: 'Malaysia', handler: 'Skypark (B737 & A319) - Subang', contact: '+60 12239 3774', email: 'operations@fbo.subangskypark.com' },
+        { country: 'Malaysia', handler: 'ExecuJet Subang (G550)', contact: '+60 3773 45672', email: 'kualalumpur.handlingwmsa@execujet-mro.com' },
+        { country: 'Indonesia', handler: 'PT Sari Rahayu Biomantara', contact: '+62 361 2244 27', email: 'ops@sarirahayubiomantara.com' },
+        { country: 'Vietnam', handler: 'Vietsky', contact: '+84 9646 88845', email: 'ops@vietskysupport.com' },
+        { country: 'Hong Kong', handler: 'HKBAC', contact: '+852 2949 9000', email: 'hkbac@hkbac.com' },
+        { country: 'Taiwan', handler: 'TBAS', contact: '+886 9370 16342', email: 'ops-tbastw268@hotmail.com' },
+        { country: 'Thailand', handler: 'Mjets (VTBD)', contact: '+66 8548 56623', email: 'ground@mjets.com' },
+        { country: 'Japan', handler: 'Universal Japan', contact: '+81 0357 08 7571', email: 'japan@universalaviation.aero' },
+      ];
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3 text-blue-900">
+            <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <p className="text-sm">
+              For countries not listed below, <strong>World Fuel Services (WFS)</strong> will liaise with their preferred ground handlers. Please copy Asia Dispatch on correspondence. Dispatch will provide company letters, passenger matters, airplane details, and permit applications to WFS.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider">
+                    <th className="p-4 font-semibold">Location</th>
+                    <th className="p-4 font-semibold">Assigned Handler</th>
+                    <th className="p-4 font-semibold">Contact Number</th>
+                    <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm divide-y divide-slate-200">
+                  {handlers.map((h, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition">
+                      <td className="p-4 font-medium text-slate-800">{h.country}</td>
+                      <td className="p-4 text-slate-600">{h.handler}</td>
+                      <td className="p-4 text-blue-600 font-medium">{h.contact}</td>
+                      <td className="p-4 text-slate-500 hidden md:table-cell">{h.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Documentation() {
+      return (
+        <div className="space-y-8">
+          <div className="bg-gradient-to-r from-amber-50 to-white border border-amber-200 rounded-xl p-6 text-center shadow-sm">
+            <FileCheckIcon className="w-10 h-10 mx-auto text-amber-500 mb-2" />
+            <h3 className="text-lg font-bold text-slate-800">Flight Documents Retention</h3>
+            <p className="text-slate-600 mt-2 max-w-xl mx-auto">
+              All flight documents must be sent to <a href="mailto:Retention@sands.com" className="text-blue-600 font-medium hover:underline">Retention@sands.com</a> for record and audit purposes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h4 className="text-lg font-semibold text-blue-900 border-b pb-3 mb-4">Pre-Flight Requirements</h4>
+              <div className="space-y-4">
+                <div>
+                  <h5 className="font-semibold text-slate-700 mb-2 text-sm uppercase tracking-wide">Required Documents</h5>
+                  <ul className="space-y-2 text-sm text-slate-600">
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Signed Flight Release (inside Flight Plan)</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Weight & Balance</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Speed / OPT</li>
+                  </ul>
+                </div>
+                <div className="pt-2">
+                  <h5 className="font-semibold text-slate-700 mb-2 text-sm uppercase tracking-wide">BART System</h5>
+                  <ul className="space-y-2 text-sm text-slate-600">
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 mr-2 flex-shrink-0"></div> Confirm all passenger details against the Final Gen Dec.</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 mr-2 flex-shrink-0"></div> <strong>Security:</strong> Ensure any additional passengers have cleared PEP and TSA NFL screenings before door closure.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h4 className="text-lg font-semibold text-blue-900 border-b pb-3 mb-4">Post-Flight Requirements</h4>
+              <div className="space-y-4">
+                <div>
+                  <h5 className="font-semibold text-slate-700 mb-2 text-sm uppercase tracking-wide">Required Documents</h5>
+                  <ul className="space-y-2 text-sm text-slate-600">
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Completed Tech Log</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Completed Flight Plan pages (with Time & Fuel burned recorded)</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Weather & NOTAMs package from WFS</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></div> Safety/Hazard report forms</li>
+                  </ul>
+                </div>
+                <div className="pt-2">
+                  <h5 className="font-semibold text-slate-700 mb-2 text-sm uppercase tracking-wide">BART System</h5>
+                  <ul className="space-y-2 text-sm text-slate-600">
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 flex-shrink-0"></div> Complete post-flight entries (timings, fuel burns, crew duties)</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 flex-shrink-0"></div> Upload fuel receipts</li>
+                    <li className="flex items-start"><div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 flex-shrink-0"></div> Upload completed Tech Log</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Accommodation() {
+      return (
+        <div className="space-y-8">
+          {/* Kuala Lumpur */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-slate-800 px-6 py-4 border-b border-slate-200 flex items-center">
+              <HotelIcon className="w-6 h-6 text-amber-400 mr-3" />
+              <h3 className="text-xl font-semibold text-white">Kuala Lumpur (KUL)</h3>
+            </div>
+            <div className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 bg-blue-50 p-4 rounded-lg">
+                <div>
+                  <p className="text-sm text-blue-900 font-medium uppercase tracking-wide">Corporate Rate Code</p>
+                  <p className="text-2xl font-bold text-blue-700 mt-1">D5448</p>
+                  <p className="text-xs text-blue-600 mt-1">Use SANDS AVIATION rates on Marriott Bonvoy apps</p>
+                </div>
+                <div className="mt-4 md:mt-0 text-sm text-slate-600 max-w-xs border-l-4 border-amber-400 pl-4">
+                  <strong>Policy Alert:</strong> Avoid booking prepaid rates due to inflexible cancellation policies.
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border border-slate-200 rounded-lg p-4">
+                  <h4 className="font-bold text-slate-800 text-lg mb-2">JW Marriott & Ritz Carlton</h4>
+                  <p className="text-sm text-slate-600 mb-1"><strong>Coordinator:</strong> Miss Evelyn Tan</p>
+                  <a href="mailto:evelyn.tan@jwmarriottkl.com" className="text-sm text-blue-600 hover:underline">evelyn.tan@jwmarriottkl.com</a>
+                  <div className="mt-3 text-xs space-y-1">
+                    <a href="mailto:reservation@jwmarriottkl.com" className="block text-slate-500 hover:text-blue-600">reservation@jwmarriottkl.com</a>
+                    <a href="mailto:reservation@ritzcarltonkl.com" className="block text-slate-500 hover:text-blue-600">reservation@ritzcarltonkl.com</a>
+                  </div>
+                </div>
+                <div className="border border-slate-200 rounded-lg p-4">
+                  <h4 className="font-bold text-slate-800 text-lg mb-2">Westin Hotel KL</h4>
+                  <p className="text-sm text-slate-600 mb-1"><strong>Coordinator:</strong> Mr. King Ti</p>
+                  <a href="mailto:kingti.poh@westin.com" className="text-sm text-blue-600 hover:underline">kingti.poh@westin.com</a>
+                  <div className="mt-3 text-xs space-y-1">
+                    <a href="mailto:Reservations.department@westin.com" className="block text-slate-500 hover:text-blue-600">Reservations.department@westin.com</a>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100">
+                <strong>Hotels nearer to Subang Airport (No corporate rate):</strong> Le Meridien Petaling Jaya, Sheraton Petaling Jaya.
+              </div>
+            </div>
+          </div>
+
+          {/* Macau */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-slate-800 px-6 py-4 border-b border-slate-200 flex items-center">
+              <HotelIcon className="w-6 h-6 text-amber-400 mr-3" />
+              <h3 className="text-xl font-semibold text-white">Macau (MFM)</h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-3">Booking Properties & Policy</h4>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    <li><strong>Preferred Hotels:</strong> W Hotel, St. Regis, or Londoner Grand (booked individually via Bonvoy app).</li>
+                    <li><strong>Rates:</strong> St. Regis and Londoner Grand offer the <strong>"Sands rate" (D5448)</strong>.</li>
+                    <li><strong>Billing:</strong> Charge all expenses (room, laundry, meals) to individual company credit cards on checkout. Keep receipts for workday expenses.</li>
+                    <li><strong>Peak Periods:</strong> Contact Jeffrey or Oz for assistance during CNY, Golden Week, Christmas, and New Year.</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-3">Booking Priority Hierarchy</h4>
+                  <ol className="list-decimal pl-5 space-y-2 text-sm text-slate-600">
+                    <li><span className="font-medium text-slate-800">W Hotel, St. Regis, or Londoner Grand</span> - Depending on lower rates (Crew books individually)</li>
+                    <li><span className="font-medium text-slate-800">Conrad</span> - Depending on rate (Crew books individually)</li>
+                    <li><span className="font-medium text-slate-800">Parisian</span> - Jeffrey/Oz books for crew</li>
+                    <li><span className="font-medium text-slate-800">Venetian</span> - Jeffrey/Oz books for crew</li>
+                    <li><span className="font-medium text-slate-800">Sands Macao</span> - Jeffrey/Oz books for crew</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transportation */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h4 className="text-lg font-semibold text-blue-900 border-b pb-3 mb-4">Ground Transportation Rules</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <h5 className="font-bold text-slate-700 mb-2">Macau</h5>
+                <p className="text-sm text-slate-600 mb-2"><strong>Asia-based aircrafts:</strong> Arranged by Jeffrey or Oz.</p>
+                <p className="text-sm text-slate-600"><strong>US-based aircrafts:</strong> Arranged by trip planner (WFS/UV) through TAG Aviation.</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <h5 className="font-bold text-slate-700 mb-2">Hong Kong (HKG)</h5>
+                <p className="text-sm text-slate-600">Use <strong>Uber or Taxi</strong> between HKBAC and Hotel to avoid the high price that HKBAC charges for using their transports.</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <h5 className="font-bold text-slate-700 mb-2">Malaysia (Subang/KUL)</h5>
+                <p className="text-sm text-slate-600"><strong>Grab</strong> is recommended between airports and hotels as a convenient and lower cost option.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function GeneralInfo() {
+      return (
+        <div className="space-y-8">
+          {/* Singapore Airport Ops */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-semibold text-blue-900">Singapore Airport Operations</h3>
+            </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-slate-800 mb-2 text-base">Primary: Seletar Airport</h4>
+                <p className="text-sm text-slate-600 mb-3">Flight crew meets at the Seletar Business Aviation Centre (SBAC).</p>
+                <address className="not-italic text-sm text-slate-500 bg-slate-50 p-3 rounded border border-slate-100">
+                  Seletar Airport Business Aviation Centre<br/>
+                  21 Seletar Aerospace Road 1<br/>
+                  Singapore 797405<br/>
+                  <span className="text-blue-600 mt-1 block font-medium">+65 6514 0676</span>
+                </address>
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-800 mb-2 text-base">Occasional: Changi Airport</h4>
+                <p className="text-sm text-slate-600 mb-3">Crew will meet at JETQUAY CIP terminal.</p>
+                <address className="not-italic text-sm text-slate-500 bg-slate-50 p-3 rounded border border-slate-100">
+                  JET QUAY PTE LTD<br/>
+                  60 AIRPORT BOULEVARD<br/>
+                  CIP TERMINAL SINGAPORE 819643<br/>
+                  <span className="text-blue-600 mt-1 block font-medium">+65 6262 2220</span>
+                </address>
+              </div>
+            </div>
+          </div>
+
+          {/* Seletar Watch */}
+          <div className="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+            <div className="bg-red-50 px-6 py-4 border-b border-red-100 flex items-center">
+              <AlertTriangleIcon className="w-6 h-6 text-red-500 mr-3" />
+              <h3 className="text-lg font-semibold text-red-900">Seletar (WSSL) Restrictions & Rules</h3>
+            </div>
+            <div className="p-6">
+              <div className="mb-6 flex items-start space-x-4">
+                 <ClockIcon className="w-8 h-8 text-slate-400 flex-shrink-0" />
+                 <div>
+                   <h4 className="font-bold text-slate-800">Night Curfew</h4>
+                   <p className="text-slate-600 text-sm mt-1">Daily operating hours are strictly from <strong>7:00 AM to 10:00 PM local time</strong> due to night curfew.</p>
+                 </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="font-bold text-slate-800 mb-3">ATC Airway Clearance & Training Slots</h4>
+                <p className="text-sm text-slate-600 mb-3">
+                  Except on Mondays, Seletar has 4 training time slots a day. <strong>Airway clearance for departure MUST be requested to ATC latest 15 mins before the start of training times</strong>, else departure will be delayed until the training period is over. Expect holdings if arrivals coincide.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                  <div className="bg-slate-100 p-2 rounded text-sm font-mono text-slate-700">09:30 - 10:30 LT</div>
+                  <div className="bg-slate-100 p-2 rounded text-sm font-mono text-slate-700">12:00 - 13:00 LT</div>
+                  <div className="bg-slate-100 p-2 rounded text-sm font-mono text-slate-700">15:00 - 16:00 LT</div>
+                  <div className="bg-slate-100 p-2 rounded text-sm font-mono text-slate-700">17:00 - 18:00 LT</div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                <h4 className="font-bold text-amber-900 mb-2 text-sm">Safety Compliance (CAG Spot Checks)</h4>
+                <ul className="list-disc pl-5 text-sm text-amber-800 space-y-1">
+                  <li>High-visibility vests <strong>must</strong> be worn during walkaround checks.</li>
+                  <li>Do not dispose of loose items or ice cubes onto the ramp to avoid Foreign Object Debris (FOD).</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Visa Requirements */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h4 className="text-lg font-semibold text-blue-900 border-b pb-3 mb-4 flex items-center">
+                 <GlobeIcon className="w-5 h-5 mr-2 text-blue-500" />
+                 US Crew Visa Requirements
+              </h4>
+              <p className="text-sm text-slate-600 mb-4">
+                US Crew members are only allowed to stay for a period of <strong>maximum 30 days</strong> at any one time in Singapore.
+              </p>
+              <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded">
+                <strong>Action Required:</strong> Crew will need to depart Singapore and return back to restart another 30-day period if required to stay longer.
+              </div>
+            </div>
+
+            {/* Repositioning Info */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h4 className="text-lg font-semibold text-blue-900 border-b pb-3 mb-4">Repositioning: SIN to Subang</h4>
+              <p className="text-sm text-slate-600 mb-4">
+                When an aircraft departs Subang while crew is in Singapore, commercial travel is required.
+              </p>
+              <ul className="text-sm text-slate-600 space-y-2 list-disc pl-5">
+                <li><strong>Firefly Airline:</strong> The only airline that operates between Seletar Airport and Subang Airport.</li>
+                <li><strong>Scoot:</strong> Operates between Changi and Subang.</li>
+                <li><strong>Other Major Airlines:</strong> Operate between Singapore Changi and KUL (Kuala Lumpur International).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Contacts() {
+      const contactsList = [
+        { name: 'Andy Too', role: 'Director of Aviation - Asia', email: 'Andy.too@marinabaysands.com', phone: '+65 8118 3591' },
+        { name: 'Lin Hong Zhi', role: 'Director of Maintenance - Asia', email: 'Hongzhi.lin@sands.com.mo', phone: '+853 6240 5516' },
+        { name: 'Cleo Soh', role: 'FA Manager - Asia', email: 'Cleo.soh@marinabaysands.com', phone: '+65 9069 9796' },
+        { name: 'Joanne Lee', role: 'Manager – Aviation Admin', email: 'Joanne.lee@marinabaysands.com', phone: '+65 8138 1375' },
+        { name: 'Jeffrey Cheung', role: 'Manager - Macau', email: 'Jeffrey.cheung@sands.com.mo', phone: '+852 6897 4701' },
+        { name: 'Claudia Ng', role: 'Senior Scheduler', email: 'Claudia.ng@marinabaysands.com', phone: '+65 9456 8331' },
+        { name: 'Asyraf', role: 'Scheduler', email: 'Asyraf.omar@marinabaysands.com', phone: '+65 8111 8805' },
+        { name: 'KC Ong', role: 'Engineer', email: 'Khoonchuan.ong@marinabaysands.com', phone: '+65 9183 7736' },
+        { name: 'Jeff Yee', role: 'Engineer', email: 'jeff.yee@marinabaysands.com', phone: '+65 8292 9286' },
+        { name: 'Huang ZhuoWei', role: 'Engineer', email: 'zhuowei.huang@sands.com.mo', phone: '+853 6694 1257' },
+        { name: 'Chris Chen', role: 'Engineer', email: 'yowjong.chen@marinabaysands.com', phone: '+65 8363 9687' },
+      ];
+
+      return (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-slate-800 px-6 py-4 border-b border-slate-200 flex items-center">
+             <UsersIcon className="w-6 h-6 text-amber-400 mr-3" />
+             <h3 className="text-xl font-semibold text-white">Asia & Macau Crew Contacts</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider">
+                  <th className="p-4 font-semibold">Name</th>
+                  <th className="p-4 font-semibold">Role</th>
+                  <th className="p-4 font-semibold">Contact Number</th>
+                  <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm divide-y divide-slate-200">
+                {contactsList.map((contact, i) => (
+                  <tr key={i} className="hover:bg-slate-50 transition">
+                    <td className="p-4 font-medium text-slate-800">{contact.name}</td>
+                    <td className="p-4 text-slate-600">
+                      <span className={`px-2 py-1 rounded text-xs ${contact.role.includes('Director') ? 'bg-amber-100 text-amber-800 font-semibold' : contact.role.includes('Engineer') ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}`}>
+                        {contact.role}
+                      </span>
+                    </td>
+                    <td className="p-4 text-slate-800 font-medium">{contact.phone}</td>
+                    <td className="p-4 text-blue-600 hidden md:table-cell">
+                      <a href={`mailto:${contact.email}`} className="hover:underline">{contact.email}</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // --- RENDER ---
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
